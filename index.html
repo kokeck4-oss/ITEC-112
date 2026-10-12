@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PHP Reviewer</title>
+<style>
+:root{--bg:#05060f;--bg2:#0b0e1f;--txt:#eef1ff;--mut:#8f98c0;--ac:#22d3ee;--ac2:#a78bfa;--ac3:#f472b6;--ok:#34d399;--bad:#fb7185;--warn:#fbbf24;--line:rgba(255,255,255,.09);--glass:rgba(255,255,255,.045);--glass2:rgba(255,255,255,.08);--r:22px}
+[data-theme=violet]{--ac:#a78bfa;--ac2:#f472b6;--ac3:#22d3ee}
+[data-theme=rose]{--ac:#fb7185;--ac2:#fbbf24;--ac3:#a78bfa}
+[data-theme=lime]{--ac:#34d399;--ac2:#22d3ee;--ac3:#fbbf24}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth;scroll-padding-top:90px}
+body{margin:0;font-family:'Inter','Segoe UI',system-ui,-apple-system,Arial,sans-serif;background:var(--bg);color:var(--txt);line-height:1.65;min-height:100vh;overflow-x:hidden}
+::selection{background:var(--ac);color:#02060c}
+::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:linear-gradient(var(--ac),var(--ac2));border-radius:10px}::-webkit-scrollbar-track{background:transparent}
+button{font-family:inherit}
+
+/* ---------- background layers ---------- */
+#fx{position:fixed;inset:0;z-index:-3;width:100%;height:100%}
+.aurora{position:fixed;inset:0;z-index:-2;overflow:hidden;pointer-events:none}
+.aurora i{position:absolute;width:55vmax;height:55vmax;border-radius:50%;filter:blur(110px);opacity:.33;animation:drift 22s ease-in-out infinite alternate;will-change:transform}
+.aurora i:nth-child(1){background:var(--ac2);top:-25%;left:-15%}
+.aurora i:nth-child(2){background:var(--ac);bottom:-30%;right:-15%;animation-delay:-8s}
+.aurora i:nth-child(3){background:var(--ac3);top:30%;left:35%;width:34vmax;height:34vmax;opacity:.16;animation-delay:-14s}
+.grid{position:fixed;inset:0;z-index:-2;pointer-events:none;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:56px 56px;mask-image:radial-gradient(ellipse at 50% 30%,#000 10%,transparent 70%);-webkit-mask-image:radial-gradient(ellipse at 50% 30%,#000 10%,transparent 70%);opacity:.5}
+@keyframes drift{to{transform:translate(9vmax,7vmax) scale(1.18) rotate(20deg)}}
+@keyframes rise{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+@keyframes pop{from{opacity:0;transform:scale(.95) translateY(-8px)}to{opacity:1;transform:none}}
+@keyframes pulse{50%{opacity:.5;transform:scale(1.05)}}
+@keyframes shine{to{background-position:200% center}}
+@keyframes blink{50%{opacity:0}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes shake{20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
+
+#prog{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,var(--ac),var(--ac2),var(--ac3));z-index:80;box-shadow:0 0 16px var(--ac)}
+
+/* ---------- header ---------- */
+header{position:sticky;top:0;z-index:60;display:flex;align-items:center;gap:10px;padding:12px clamp(14px,3vw,34px);background:rgba(5,6,15,.55);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:11px;margin-right:auto;font-weight:800;font-size:18px;letter-spacing:.3px}
+.logo{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg,var(--ac),var(--ac2));color:#04070f;font-family:Consolas,monospace;font-weight:900;font-size:13px;box-shadow:0 0 24px color-mix(in srgb,var(--ac) 60%,transparent);animation:pulse 3.5s ease-in-out infinite}
+.brand small{display:block;font-weight:500;font-size:11px;color:var(--mut);letter-spacing:1.5px;text-transform:uppercase;margin-top:-3px}
+.tabs{display:flex;gap:4px;background:var(--glass);border:1px solid var(--line);padding:4px;border-radius:14px}
+.tab{background:none;border:0;color:var(--mut);padding:8px 16px;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;transition:.25s}
+.tab:hover{color:var(--txt)}
+.tab.on{background:linear-gradient(135deg,var(--ac),var(--ac2));color:#04070f;box-shadow:0 4px 18px color-mix(in srgb,var(--ac) 40%,transparent)}
+.dots{display:flex;gap:7px;align-items:center}
+.dots b{width:17px;height:17px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:.2s}
+.dots b:hover{transform:scale(1.2)}
+.dots b.on{border-color:#fff;box-shadow:0 0 12px currentColor}
+.ibtn{background:var(--glass);border:1px solid var(--line);color:var(--txt);padding:8px 13px;border-radius:12px;cursor:pointer;font-weight:600;font-size:13px;transition:.25s}
+.ibtn:hover{border-color:var(--ac);box-shadow:0 0 18px color-mix(in srgb,var(--ac) 35%,transparent);transform:translateY(-1px)}
+
+/* ---------- buttons ---------- */
+.btn{background:linear-gradient(135deg,var(--ac),var(--ac2));color:#04070f;border:0;padding:12px 22px;border-radius:14px;font-weight:800;cursor:pointer;font-size:15px;box-shadow:0 6px 24px color-mix(in srgb,var(--ac) 35%,transparent);transition:.25s;position:relative;overflow:hidden}
+.btn:hover{transform:translateY(-3px);box-shadow:0 12px 34px color-mix(in srgb,var(--ac2) 50%,transparent)}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.35;cursor:not-allowed;transform:none;box-shadow:none}
+.btn.ghost{background:var(--glass);color:var(--txt);border:1px solid var(--line);box-shadow:none}
+.btn.ghost:hover{border-color:var(--ac);box-shadow:0 0 22px color-mix(in srgb,var(--ac) 30%,transparent)}
+.btn.sm{padding:8px 14px;font-size:13px;border-radius:11px}
+.btn.big{padding:16px 34px;font-size:17px;border-radius:16px}
+
+.wrap{max-width:1240px;margin:0 auto;padding:0 clamp(14px,3vw,34px) 80px}
+.hide{display:none!important}
+
+/* ---------- hero ---------- */
+.hero{padding:60px 0 34px;display:grid;grid-template-columns:1.15fr .85fr;gap:36px;align-items:center}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:30px;background:var(--glass);border:1px solid var(--line);font-size:12px;letter-spacing:1.6px;text-transform:uppercase;color:var(--ac);font-weight:700}
+.pill::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 12px var(--ok);animation:pulse 2s infinite}
+.hero h2{font-size:clamp(38px,6vw,72px);line-height:1.04;margin:18px 0 14px;font-weight:900;letter-spacing:-1.5px}
+.grad{background:linear-gradient(90deg,var(--ac),var(--ac2),var(--ac3),var(--ac));background-size:200% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:shine 6s linear infinite}
+.hero p{color:var(--mut);font-size:18px;max-width:560px;margin:0 0 26px}
+.cta{display:flex;gap:12px;flex-wrap:wrap}
+.term{background:rgba(3,5,14,.8);border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.5),0 0 60px color-mix(in srgb,var(--ac2) 18%,transparent);transform:perspective(1100px) rotateY(-7deg) rotateX(3deg);transition:transform .5s}
+.term:hover{transform:perspective(1100px) rotateY(0) rotateX(0)}
+.bar3{display:flex;gap:7px;align-items:center;padding:12px 15px;background:rgba(255,255,255,.04);border-bottom:1px solid var(--line)}
+.bar3 i{width:12px;height:12px;border-radius:50%}
+.bar3 i:nth-child(1){background:#ff5f57}.bar3 i:nth-child(2){background:#febc2e}.bar3 i:nth-child(3){background:#28c840}
+.bar3 span{margin-left:auto;font-size:12px;color:var(--mut);font-family:Consolas,monospace}
+.term pre{margin:0;padding:20px;min-height:230px;font-family:Consolas,'Fira Code',monospace;font-size:14px;line-height:1.7;white-space:pre-wrap;color:#cbd5ff}
+.cur{display:inline-block;width:9px;height:17px;background:var(--ac);vertical-align:-3px;margin-left:2px;animation:blink 1s step-end infinite}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:6px 0 10px}
+.stat{background:var(--glass);border:1px solid var(--line);border-radius:18px;padding:16px 18px;backdrop-filter:blur(10px);transition:.3s}
+.stat:hover{transform:translateY(-4px);border-color:color-mix(in srgb,var(--ac) 50%,transparent)}
+.stat b{display:block;font-size:30px;font-weight:900;line-height:1.1}
+.stat span{font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:1.2px}
+
+/* ---------- layout ---------- */
+.layout{display:grid;grid-template-columns:280px 1fr;gap:30px;align-items:start;margin-top:28px}
+#side{position:sticky;top:88px;background:var(--glass);border:1px solid var(--line);border-radius:var(--r);padding:16px;backdrop-filter:blur(14px);max-height:calc(100vh - 110px);overflow:auto}
+#side h4{margin:2px 6px 10px;font-size:12px;letter-spacing:1.6px;text-transform:uppercase;color:var(--mut)}
+#side a{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:12px;color:var(--mut);text-decoration:none;font-size:14px;font-weight:600;transition:.2s;border:1px solid transparent}
+#side a em{flex:none;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-style:normal;font-size:12px;font-weight:800;background:var(--glass2);transition:.2s}
+#side a:hover{color:var(--txt);background:var(--glass)}
+#side a.on{color:var(--txt);background:linear-gradient(135deg,color-mix(in srgb,var(--ac) 18%,transparent),color-mix(in srgb,var(--ac2) 18%,transparent));border-color:color-mix(in srgb,var(--ac) 35%,transparent)}
+#side a.on em{background:linear-gradient(135deg,var(--ac),var(--ac2));color:#04070f}
+#side a.done em{background:var(--ok);color:#03150d}
+#side a.done em::after{content:"✓"}
+#side a.done em span{display:none}
+
+/* ---------- topic cards ---------- */
+.card{position:relative;background:var(--glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-radius:var(--r);padding:clamp(18px,3vw,30px);margin:0 0 24px;border:1px solid var(--line);box-shadow:0 16px 50px rgba(0,0,0,.35);transition:border-color .3s,box-shadow .3s,transform .3s;overflow:hidden}
+.card:hover{border-color:color-mix(in srgb,var(--ac) 40%,transparent)}
+.rv{opacity:0;transform:translateY(26px);transition:opacity .7s,transform .7s}
+.rv.in{opacity:1;transform:none}
+.th{display:flex;align-items:flex-start;gap:16px;margin-bottom:16px}
+.num{flex:none;width:52px;height:52px;border-radius:16px;display:grid;place-items:center;font-weight:900;font-size:20px;background:linear-gradient(135deg,var(--ac),var(--ac2));color:#04070f;box-shadow:0 8px 26px color-mix(in srgb,var(--ac) 40%,transparent)}
+.th h3{margin:0;font-size:clamp(18px,2.4vw,24px);line-height:1.3;font-weight:800}
+ul.pts{list-style:none;padding:0;margin:0}
+ul.pts li{position:relative;padding:11px 14px 11px 42px;margin:8px 0;background:rgba(255,255,255,.025);border:1px solid transparent;border-radius:14px;transition:.25s}
+ul.pts li::before{content:"";position:absolute;left:16px;top:20px;width:9px;height:9px;border-radius:3px;background:linear-gradient(135deg,var(--ac),var(--ac3));transform:rotate(45deg)}
+ul.pts li:hover{background:rgba(255,255,255,.055);border-color:var(--line);transform:translateX(4px)}
+code{background:color-mix(in srgb,var(--ac) 12%,transparent);border:1px solid color-mix(in srgb,var(--ac) 28%,transparent);padding:1px 8px;border-radius:8px;color:#fde68a;font-family:Consolas,'Fira Code',monospace;font-size:.9em;white-space:pre-wrap}
+
+/* code window */
+.cw{margin:18px 0;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:#04061300;background:rgba(3,5,14,.85);box-shadow:0 10px 40px rgba(0,0,0,.4)}
+.cw .bar3 button{margin-left:auto;background:var(--glass2);border:1px solid var(--line);color:var(--txt);font-size:12px;padding:4px 11px;border-radius:8px;cursor:pointer;transition:.2s}
+.cw .bar3 button:hover{border-color:var(--ac);color:var(--ac)}
+.cw .bar3 span{margin-left:8px}
+.cw pre{margin:0;padding:18px 20px;overflow-x:auto;font-family:Consolas,'Fira Code',monospace;font-size:13.5px;line-height:1.75;color:#d6defa;white-space:pre}
+.cm{color:#6b7599;font-style:italic}.st{color:#a7f3d0}.tg{color:#f472b6;font-weight:700}.va{color:#7dd3fc}.kw{color:#c4b5fd;font-weight:700}.nu{color:#fbbf24}.fn{color:#fde68a}
+
+.eli{margin-top:6px}
+.eli .btn{display:inline-flex;gap:8px;align-items:center}
+.e5{max-height:0;opacity:0;overflow:hidden;transition:max-height .5s,opacity .4s,margin .4s;background:linear-gradient(135deg,color-mix(in srgb,var(--ac2) 30%,transparent),color-mix(in srgb,var(--ac3) 20%,transparent));border:1px solid color-mix(in srgb,var(--ac2) 45%,transparent);border-radius:16px;padding:0 18px;font-size:15.5px}
+.e5.on{max-height:320px;opacity:1;margin-top:14px;padding:16px 18px}
+.mark{float:right;margin-top:-2px}
+.mark.done{background:linear-gradient(135deg,var(--ok),#10b981);color:#03150d;border:0}
+
+/* ---------- exam home ---------- */
+.xh{max-width:760px;margin:48px auto 0}
+.rules{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:20px 0}
+.rule{display:flex;gap:12px;align-items:flex-start;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:16px;padding:14px}
+.rule b{font-size:26px;line-height:1}
+.rule span{font-size:14.5px;color:#cfd6f5}
+.warnbox{background:linear-gradient(135deg,rgba(251,191,36,.16),rgba(251,113,133,.14));border:1px solid rgba(251,191,36,.45);border-radius:16px;padding:14px 16px;margin:14px 0;font-weight:600}
+.xh h2{font-size:34px;margin:0 0 4px;font-weight:900}
+
+/* ---------- exam ---------- */
+#exam{max-width:1000px;margin:0 auto;padding:22px clamp(14px,3vw,24px) 60px}
+.xtop{display:flex;align-items:center;gap:18px;margin-bottom:16px;flex-wrap:wrap}
+.ring{position:relative;width:96px;height:96px;flex:none}
+.ring svg{transform:rotate(-90deg);width:100%;height:100%}
+.ring circle{fill:none;stroke-width:8;stroke-linecap:round}
+.ring .tr{stroke:var(--glass2)}
+.ring .pr{stroke:url(#gr);stroke-dasharray:326.7;stroke-dashoffset:0;transition:stroke-dashoffset .5s linear}
+.ring.low .pr{stroke:var(--bad)}
+.timer{position:absolute;inset:0;display:grid;place-items:center;font-family:Consolas,monospace;font-weight:800;font-size:21px}
+.ring.low .timer{color:var(--bad);animation:pulse 1s infinite}
+.xinfo{flex:1;min-width:200px}
+.xinfo b{font-size:20px}
+.pbar{height:8px;background:var(--glass2);border-radius:9px;overflow:hidden;margin-top:9px}
+.pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--ac),var(--ac2),var(--ac3));transition:width .4s;box-shadow:0 0 14px var(--ac)}
+.qnav{display:grid;grid-template-columns:repeat(auto-fill,minmax(38px,1fr));gap:7px;margin:14px 0 20px}
+.qnav button{height:38px;border-radius:11px;background:var(--glass);color:var(--mut);border:1px solid var(--line);cursor:pointer;font-weight:700;transition:.2s;position:relative}
+.qnav button:hover{border-color:var(--ac);color:var(--txt)}
+.qnav button.done{background:linear-gradient(135deg,var(--ok),#10b981);color:#03150d;border:0}
+.qnav button.fl::after{content:"⚑";position:absolute;top:-6px;right:-3px;font-size:12px;color:var(--warn)}
+.qnav button.cur{outline:2px solid var(--ac);outline-offset:2px;box-shadow:0 0 18px var(--ac)}
+.qcard{padding:clamp(18px,3vw,32px);animation:pop .35s both}
+.qhead{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.qtag{font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ac);font-weight:800}
+.flag{margin-left:auto}
+.flag.on{background:rgba(251,191,36,.18);border-color:var(--warn);color:var(--warn)}
+.qtext{font-size:clamp(18px,2.4vw,23px);font-weight:700;line-height:1.5;margin:0 0 20px;white-space:pre-wrap}
+.qcode{margin:0 0 20px}
+.qcode pre{white-space:pre}
+.opts{counter-reset:o;display:grid;gap:11px}
+.opt{counter-increment:o;display:flex;align-items:center;gap:14px;text-align:left;width:100%;background:rgba(255,255,255,.035);color:var(--txt);padding:14px 16px;border:1px solid var(--line);border-radius:16px;font-size:16px;font-weight:600;cursor:pointer;transition:.22s;animation:rise .4s both}
+.opt:nth-child(2){animation-delay:.05s}.opt:nth-child(3){animation-delay:.1s}.opt:nth-child(4){animation-delay:.15s}
+.opt::before{content:counter(o,upper-alpha);flex:none;width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:var(--glass2);font-weight:900;color:var(--ac);transition:.22s}
+.opt:hover{transform:translateX(7px);border-color:var(--ac);box-shadow:0 0 24px color-mix(in srgb,var(--ac) 25%,transparent)}
+.opt.sel{border-color:var(--ac);background:linear-gradient(135deg,color-mix(in srgb,var(--ac) 22%,transparent),color-mix(in srgb,var(--ac2) 22%,transparent));box-shadow:0 0 30px color-mix(in srgb,var(--ac) 30%,transparent)}
+.opt.sel::before{background:linear-gradient(135deg,var(--ac),var(--ac2));color:#04070f}
+.xnav{display:flex;gap:10px;margin-top:20px;align-items:center;flex-wrap:wrap}
+.xnav .sp{flex:1}
+.kb{font-size:12px;color:var(--mut)}
+.kb kbd{background:var(--glass2);border:1px solid var(--line);border-radius:6px;padding:1px 7px;font-family:Consolas,monospace}
+
+/* modal */
+.modal{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:rgba(2,3,10,.7);backdrop-filter:blur(8px);animation:rise .25s both;padding:18px}
+.mbox{max-width:440px;width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:24px;padding:28px;box-shadow:0 40px 100px rgba(0,0,0,.7);animation:pop .3s both;text-align:center}
+.mbox h3{margin:0 0 8px;font-size:24px}
+.mbox p{color:var(--mut);margin:0 0 20px}
+.mbox .row{display:flex;gap:10px;justify-content:center}
+
+/* ---------- results ---------- */
+.res{display:flex;gap:26px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.sring{position:relative;width:170px;height:170px;flex:none}
+.sring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.sring circle{fill:none;stroke-width:11;stroke-linecap:round}
+.sring .tr{stroke:var(--glass2)}
+.sring .pr{stroke:url(#gr2);stroke-dasharray:471.2;stroke-dashoffset:471.2;transition:stroke-dashoffset 1.6s cubic-bezier(.2,.8,.2,1)}
+.sring .mid{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+.sring .mid b{font-size:44px;font-weight:900;line-height:1}
+.sring .mid span{display:block;font-size:12px;color:var(--mut);letter-spacing:1px}
+.rtxt h3{font-size:30px;margin:0 0 6px;font-weight:900}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+.chip{padding:6px 14px;border-radius:30px;border:1px solid var(--line);background:var(--glass);font-size:13px;font-weight:700;cursor:pointer;color:var(--mut);transition:.2s}
+.chip.on{background:linear-gradient(135deg,var(--ac),var(--ac2));color:#04070f;border:0}
+.ak{margin:10px 0;padding:14px 16px;border-left:4px solid var(--ok);background:rgba(255,255,255,.035);border-radius:14px;animation:rise .4s both}
+.ak.x{border-left-color:var(--bad)}
+.ak pre{margin:0 0 6px;font-family:inherit;white-space:pre-wrap;font-weight:600}
+.ak .y{font-size:14px;color:var(--mut)}
+.ak .c{font-size:14px;color:var(--ok);font-weight:800}
+.note{color:var(--mut);font-size:14px}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:90;width:100%;height:100%}
+
+footer{text-align:center;color:var(--mut);font-size:13px;padding:30px 0 10px}
+
+/* ---------- responsive ---------- */
+@media(max-width:980px){
+  .hero{grid-template-columns:1fr;padding-top:34px}.term{transform:none}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .layout{grid-template-columns:1fr}
+  #side{position:sticky;top:64px;z-index:30;display:flex;gap:6px;overflow-x:auto;padding:8px;max-height:none;border-radius:16px}
+  #side h4{display:none}#side a{flex:none;white-space:nowrap}#side a span.t{display:none}
+  .rules{grid-template-columns:1fr}
+  .dots{display:none}
+}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<canvas id="fx"></canvas>
+<div class="aurora"><i></i><i></i><i></i></div>
+<div class="grid"></div>
+<canvas id="confetti" class="hide"></canvas>
+<div id="prog"></div>
+
+<header id="topbar">
+  <div class="brand"><div class="logo">&lt;?&gt;</div><div>PHP Reviewer<small>ITEC 112 · Programming 1</small></div></div>
+  <div class="tabs">
+    <button class="tab on" id="tabRev" onclick="show('rev')">📘 Reviewer</button>
+    <button class="tab" id="tabEx" onclick="show('exh')">📝 Exam</button>
+  </div>
+  <div class="dots" id="dots" title="Accent color">
+    <b style="background:#22d3ee;color:#22d3ee" data-t="cyan"></b>
+    <b style="background:#a78bfa;color:#a78bfa" data-t="violet"></b>
+    <b style="background:#fb7185;color:#fb7185" data-t="rose"></b>
+    <b style="background:#34d399;color:#34d399" data-t="lime"></b>
+  </div>
+  <button class="ibtn" onclick="toggleAll()">🧒 ELI5 all</button>
+</header>
+
+<main class="wrap">
+  <!-- REVIEWER -->
+  <section id="rev">
+    <div class="hero">
+      <div>
+        <span class="pill">Study mode · 13 topics</span>
+        <h2>Master <span class="grad">PHP</span><br>one block at a time.</h2>
+        <p>Short summaries, color coded code, kid simple explanations, and a timed 40 item exam to prove you got it.</p>
+        <div class="cta">
+          <button class="btn big" onclick="document.getElementById('t0').scrollIntoView()">Start reviewing →</button>
+          <button class="btn big ghost" onclick="show('exh')">Take the exam</button>
+        </div>
+      </div>
+      <div class="term">
+        <div class="bar3"><i></i><i></i><i></i><span>reviewer.php</span></div>
+        <pre id="typer"></pre>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><b id="sTop">0/13</b><span>Topics studied</span></div>
+      <div class="stat"><b>40</b><span>Exam items</span></div>
+      <div class="stat"><b>30:00</b><span>Time limit</span></div>
+      <div class="stat"><b id="sBest">--</b><span>Best score</span></div>
+    </div>
+    <div class="layout">
+      <nav id="side"><h4>Topics</h4></nav>
+      <div id="topics"></div>
+    </div>
+  </section>
+
+  <!-- EXAM HOME -->
+  <section id="exh" class="hide">
+    <div class="xh">
+      <div class="card">
+        <h2>📝 Exam <span class="grad">Arena</span></h2>
+        <p class="note">Focus up. Once you start, there is no turning back.</p>
+        <div class="rules">
+          <div class="rule"><b>🧮</b><span>40 items covering all 13 topics</span></div>
+          <div class="rule"><b>⏱️</b><span>30 minutes only</span></div>
+          <div class="rule"><b>🙈</b><span>The reviewer is hidden during the exam</span></div>
+          <div class="rule"><b>🚫</b><span>Switch tabs or minimize and the exam ends. No score or answers shown.</span></div>
+        </div>
+        <p class="note">You can retake it only after 30 minutes.</p>
+        <div id="cool" class="warnbox hide"></div>
+        <button class="btn big" id="startBtn" onclick="startExam()">Start Exam 🚀</button>
+      </div>
+      <div id="resultBox"></div>
+    </div>
+  </section>
+</main>
+
+<!-- EXAM -->
+<section id="exam" class="hide">
+  <div class="card" style="margin-bottom:18px">
+    <div class="xtop">
+      <div class="ring" id="ring">
+        <svg viewBox="0 0 120 120"><defs><linearGradient id="gr" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#a78bfa"/></linearGradient></defs><circle class="tr" cx="60" cy="60" r="52"/><circle class="pr" id="pr" cx="60" cy="60" r="52"/></svg>
+        <div class="timer" id="timer">30:00</div>
+      </div>
+      <div class="xinfo"><b id="qcount"></b><div class="pbar"><i id="abar"></i></div><div class="kb" style="margin-top:8px">Keys: <kbd>1</kbd>-<kbd>4</kbd> pick · <kbd>←</kbd> <kbd>→</kbd> move · <kbd>F</kbd> flag</div></div>
+      <button class="btn" onclick="submitExam()">Submit ✔</button>
+    </div>
+    <div class="qnav" id="qnav"></div>
+  </div>
+  <div class="card qcard" id="qbox"></div>
+  <div class="xnav">
+    <button class="btn ghost" onclick="go(-1)">◀ Prev</button>
+    <span class="sp"></span>
+    <button class="btn ghost" onclick="go(1)">Next ▶</button>
+  </div>
+</section>
+
+<footer id="foot">Made for studying. Good luck! 💜</footer>
+
+<script>
+/* ===================== REVIEWER CONTENT ===================== */
+const T=[
+{t:"1. Introduction to Programming & Basic Problem-Solving Process",
+sum:[
+"A [[program]] is a list of instructions a computer follows. A [[programming language]] (like PHP) is how we write them.",
+"PHP is a [[server-side]] language: code runs on the server, and the browser only receives the result (HTML). Files end in [[.php]].",
+"PHP code lives inside [[<?php ... ?>]] tags. Each statement ends with a semicolon [[;]].",
+"Comments (ignored by PHP): [[// one line]], [[# one line]], [[/* many lines */]].",
+"Problem-solving steps: (1) Understand the problem, (2) Plan the solution (algorithm), (3) Write the code, (4) Test and debug, (5) Improve/document.",
+"[[Algorithm]] = step-by-step solution. Written as [[pseudocode]] (plain-English steps) or a [[flowchart]] (diagram).",
+"Every program follows [[IPO]]: Input, Process, Output."],
+code:`<?php
+// Problem: add two numbers
+// Input: 5 and 3 | Process: add | Output: result
+$a = 5;
+$b = 3;
+$sum = $a + $b;
+echo $sum;   // 8
+?>`,
+eli5:"A program is a recipe for a robot. The robot does exactly what the recipe says, one step at a time, never skipping. Before cooking, you think about what you want to make (plan), then write the recipe (code), then taste it and fix mistakes (test)."},
+
+{t:"2. PHP Variables, Naming Rules & Data Types",
+sum:[
+"A [[variable]] is a named box that stores a value. It always starts with a dollar sign: [[$name]].",
+"Naming rules: must start with a letter or underscore (NOT a number); only letters, numbers, underscores; NO spaces or symbols; variable names are [[case-sensitive]] ([[$age]] and [[$Age]] are different).",
+"Valid: [[$age]], [[$_total]], [[$first_name]]. Invalid: [[$1st]], [[$my name]], [[$total-score]].",
+"Data types: [[string]] (text), [[int]] (whole number), [[float]] (decimal), [[bool]] (true/false), [[array]] (list), [[null]] (no value).",
+"PHP is [[dynamically typed]]: you do not declare the type, PHP decides from the value.",
+"Check type with [[gettype()]] or [[var_dump()]]. Note: [[gettype(10)]] returns 'integer'.",
+"Constants (never change): [[define('PI', 3.14);]] or [[const PI = 3.14;]]."],
+code:`<?php
+$name = "John";      // string
+$age = 17;          // int
+$gpa = 1.75;        // float
+$isStudent = true;  // bool
+var_dump($age);     // int(17)
+echo gettype($gpa); // double
+?>`,
+eli5:"A variable is a labeled box. The label is its name ($age) and inside is a thing (17). Rules for labels: they can't start with a number and can't have spaces. Boxes hold different kinds of things: words, whole numbers, decimals, or yes/no."},
+
+{t:"3. PHP Input and Output (echo and user input)",
+sum:[
+"[[echo]] prints output. [[print]] also prints (returns 1). Echo is more common.",
+"Join text with the dot operator [[.]] (concatenation): [[echo 'Hi ' . $name;]]",
+"[[Double quotes]] read variables inside: [[\"Hi $name\"]] -> Hi John. [[Single quotes]] print exactly as typed: [['Hi $name']] -> Hi $name.",
+"Newline: [[\"\\n\"]] in text/CLI, [[<br>]] in a web page.",
+"User input from a web form: [[$_POST['field']]] (method=post) or [[$_GET['field']]] (method=get).",
+"User input from the command line: [[fgets(STDIN)]] or [[readline('Enter: ')]]. Use [[trim()]] to remove the extra newline/spaces.",
+"Input always arrives as a [[string]], so convert it to a number before doing math (next topic)."],
+code:`<?php
+// Web form: <form method="post"><input name="name"><button>Go</button></form>
+if (isset($_POST['name'])) {
+    $name = $_POST['name'];
+    echo "Hello, " . $name . "!";
+}
+
+// Command line
+$age = trim(fgets(STDIN));
+echo 'You typed: ' . $age;
+?>`,
+eli5:"echo is the computer talking out loud to you. Input is you talking to the computer, like filling in a form. Double quotes are magic quotes that swap $name for the real name; single quotes just say the words exactly as written."},
+
+{t:"4. Type Conversion using intval() and floatval()",
+sum:[
+"User input is text, so we convert it. [[intval()]] -> whole number. [[floatval()]] -> decimal number.",
+"[[intval('42abc')]] = 42 (reads digits from the start and stops at the first non-number).",
+"[[intval('abc')]] = 0 (nothing to read).",
+"[[intval(9.99)]] = 9 (it cuts off the decimal; it does NOT round).",
+"[[floatval('3.14xyz')]] = 3.14. [[floatval('5')]] = 5.0.",
+"Casting also works: [[(int)'12']], [[(float)'1.5']], [[(string)10]].",
+"Helpers: [[is_numeric($x)]] checks if a value is a number or numeric string; [[strval()]] converts to string.",
+"PHP also converts automatically in math: [['5' + 3]] = 8 (type juggling)."],
+code:`<?php
+echo intval("42abc");   // 42
+echo intval("abc");     // 0
+echo intval(9.99);      // 9
+echo floatval("3.14xyz"); // 3.14
+$qty = intval($_POST['qty']);
+$price = floatval($_POST['price']);
+echo $qty * $price;
+?>`,
+eli5:"When you type 5 into a box, the computer thinks it's the letter-picture '5', not the real number. intval() and floatval() are like a translator that turns the picture into a number you can count with. intval chops off the decimal part, like cutting off the crumbs."},
+
+{t:"5. Arithmetic, Relational, and Logical Operators",
+sum:[
+"[[Arithmetic]]: [[+]] add, [[-]] subtract, [[*]] multiply, [[/]] divide (10/4 = 2.5), [[%]] remainder (10%3 = 1), [[**]] power (2**3 = 8). [[intdiv(10,4)]] = 2.",
+"[[Assignment]]: [[=]], [[+=]], [[-=]], [[*=]], [[/=]], [[.=]]. Increase/decrease: [[$i++]], [[$i--]].",
+"[[Relational]] (give true/false): [[==]] equal value, [[===]] equal value AND type, [[!=]] not equal, [[!==]] not identical, [[<]], [[>]], [[<=]], [[>=]], [[<=>]] spaceship (-1, 0, 1).",
+"[['5' == 5]] is true, but [['5' === 5]] is false (different types).",
+"[[Logical]]: [[&&]] / [[and]] (both true), [[||]] / [[or]] (at least one true), [[!]] (opposite), [[xor]] (only one true).",
+"Truth table: true&&false = false; true||false = true; !true = false.",
+"Common use: [[$age >= 18 && $age <= 60]]. Remainder trick: [[$n % 2 == 0]] means even."],
+code:`<?php
+echo 10 % 3;        // 1
+echo 2 ** 3;        // 8
+var_dump(5 == "5"); // true
+var_dump(5 === "5");// false
+$x = 7;
+var_dump($x > 5 && $x < 10); // true
+var_dump(!($x > 5));         // false
+?>`,
+eli5:"Arithmetic is calculator buttons. Relational operators ask yes/no questions like 'is 5 bigger than 3?'. Logical operators combine questions: AND means both answers must be yes, OR means at least one yes, NOT flips yes to no. == asks 'same thing?' and === asks 'same thing AND same kind?'."},
+
+{t:"6. Operator Precedence and Simple Expressions",
+sum:[
+"[[Precedence]] = which operator goes first. Use [[parentheses ( )]] to force the order.",
+"Highest to lowest (simplified): [[( )]] -> [[**]] -> [[++ --]] -> [[!]] -> [[* / %]] -> [[+ -]] -> [[. (concat)]] -> [[< <= > >=]] -> [[== != === !==]] -> [[&&]] -> [[||]] -> [[= += -=]] -> [[and]] -> [[or]].",
+"Same level: usually left to right. 10 - 4 - 2 = 4. But [[**]] and [[=]] go right to left: 2 ** 3 ** 2 = 2 ** 9 = 512.",
+"2 + 3 * 4 = 14 (multiply first). (2 + 3) * 4 = 20.",
+"[[&&]] is checked before [[||]]: true || false && false = true.",
+"An [[expression]] is anything that produces a value: [[$a + $b * 2]], [[$age >= 18]]."],
+code:`<?php
+echo 2 + 3 * 4;      // 14
+echo (2 + 3) * 4;    // 20
+echo 10 - 4 - 2;     // 4
+echo 2 ** 3 ** 2;    // 512
+echo 10 + 5 % 3;     // 12  (5%3 = 2, then 10+2)
+?>`,
+eli5:"Like in math class: some things must be done first. Brackets go first, then times and divide, then plus and minus. If you want something done first, wrap it in brackets (like telling the robot 'do THIS part first!')."},
+
+{t:"7. Conditional Statements: if, if-else, if-elseif-else, switch",
+sum:[
+"Conditionals let the program [[decide]] based on true/false.",
+"[[if]]: runs the block only when the condition is true.",
+"[[if-else]]: one block when true, another when false.",
+"[[if-elseif-else]]: checks conditions in order; the first true one runs, the rest are skipped.",
+"[[switch]]: compares ONE value against many fixed choices ([[case]]). Use [[break]] to stop; without it PHP 'falls through' to the next case. [[default]] runs when nothing matches.",
+"Switch uses loose comparison (==). Great for menus, days of the week, options 1-5.",
+"Always use [[==]] (compare), not [[=]] (assign), inside conditions."],
+code:`<?php
+$n = 5;
+if ($n > 0) { echo "Positive"; }
+elseif ($n < 0) { echo "Negative"; }
+else { echo "Zero"; }
+
+$day = 3;
+switch ($day) {
+    case 1: echo "Mon"; break;
+    case 2: echo "Tue"; break;
+    case 3: echo "Wed"; break;
+    default: echo "Other";
+}
+?>`,
+eli5:"If it's raining, bring an umbrella. Otherwise, wear sunglasses. That's if-else! A switch is like a vending machine: you press one button (case) and get exactly that snack. 'break' is letting go of the button so it doesn't drop the next snack too."},
+
+{t:"8. Nested Decisions and Grade Classification",
+sum:[
+"[[Nested decision]] = an if inside another if. The inner one runs only if the outer is true.",
+"Example: first check the score is valid (0-100), then classify the grade.",
+"For ranges, check from [[highest to lowest]] using an elseif ladder so each score gets only one result.",
+"Typical grading: 90-100 = A, 80-89 = B, 70-79 = C, 75 = passing (varies), below = F/Failed. Always follow the scale your teacher gives.",
+"Range check: [[$g >= 75 && $g <= 100]] (both parts must be true).",
+"Use [[&&]] to combine conditions instead of too many nested ifs when it makes the code clearer."],
+code:`<?php
+$score = 85;
+if ($score >= 0 && $score <= 100) {
+    if ($score >= 90)      { $grade = "A"; }
+    elseif ($score >= 80)  { $grade = "B"; }
+    elseif ($score >= 70)  { $grade = "C"; }
+    else                   { $grade = "F"; }
+    echo "Grade: $grade";   // Grade: B
+} else {
+    echo "Invalid score";
+}
+?>`,
+eli5:"It's like a gate with a second gate behind it. First gate: 'Is your score a real score (0 to 100)?' If yes, go to the second gate: 'Is it 90 or more? A! If not, 80 or more? B!' and so on. You only get one grade because you stop at the first gate that says yes."},
+
+{t:"9. Looping Statements: while, do-while, for",
+sum:[
+"[[Loops]] repeat code so you don't write it many times.",
+"[[while]]: checks the condition FIRST. If false at the start, it never runs.",
+"[[do-while]]: runs the body FIRST, then checks. It always runs [[at least once]].",
+"[[for]]: best when you know how many times. Parts: [[for (start; condition; update)]].",
+"Loop needs 3 things: a starting value, a condition, and an update (like [[$i++]]). Forget the update and you get an [[infinite loop]].",
+"Bonus: [[foreach]] loops through arrays.",
+"Sum/Counter pattern: [[$sum += $i;]] inside the loop."],
+code:`<?php
+for ($i = 1; $i <= 3; $i++) { echo $i; }   // 123
+
+$i = 1;
+while ($i <= 3) { echo $i; $i++; }          // 123
+
+$j = 10;
+do { echo $j; $j++; } while ($j < 5);       // 10 (runs once)
+?>`,
+eli5:"A loop is doing the same thing again and again, like clapping 5 times. 'for' = clap exactly 5 times. 'while' = keep clapping while the music plays (if music is off from the start, no claps). 'do-while' = clap once first, THEN check if the music is still on."},
+
+{t:"10. Loop Control using break and continue",
+sum:[
+"[[break]]: stops the whole loop immediately and jumps to the code after the loop.",
+"[[continue]]: skips the rest of the CURRENT round and goes to the next round.",
+"In a [[for]] loop, continue still runs the update part ([[$i++]]).",
+"In a [[while]] loop, be careful: if continue skips your [[$i++]], you may create an infinite loop.",
+"break is also used to leave a [[switch]] case.",
+"Use break to stop early (like finding something); use continue to ignore special cases (like skipping a number)."],
+code:`<?php
+for ($i = 1; $i <= 5; $i++) {
+    if ($i == 3) { continue; }  // skip 3
+    echo $i;
+}
+// Output: 1245
+
+for ($i = 1; $i <= 5; $i++) {
+    if ($i == 3) { break; }     // stop at 3
+    echo $i;
+}
+// Output: 12
+?>`,
+eli5:"You're eating 5 cookies one by one. 'continue' = this cookie is yucky, skip it and take the next. 'break' = I'm full, stop eating cookies completely!"},
+
+{t:"11. Tracing PHP Code and Identifying Program Output",
+sum:[
+"[[Tracing]] (dry run) = following the code line by line like the computer, and writing down variable values.",
+"Make a table: one column per variable, one row per step.",
+"Watch the [[order of operations]], the [[loop condition]], and whether it prints inside or after the loop.",
+"[[echo]] does not add a new line. Outputs stick together: echo 1; echo 2; prints 12.",
+"[[$i++]] gives the old value then adds 1; [[++$i]] adds 1 then gives the value.",
+"Shortcut check: [[$x += 3]] is the same as [[$x = $x + 3]]."],
+code:`<?php
+$x = 2;
+$x += 3;     // x = 5
+$x *= 2;     // x = 10
+echo $x;     // 10
+
+$total = 0;
+for ($i = 1; $i <= 4; $i++) {
+    $total += $i;
+}
+echo $total; // 1+2+3+4 = 10
+?>
+/* Trace table
+ i | total
+ 1 | 1
+ 2 | 3
+ 3 | 6
+ 4 | 10 */`,
+eli5:"Pretend you're the computer with a pencil. Read one line, write what changed on paper, then read the next line. Don't guess the answer; follow the steps like a treasure map."},
+
+{t:"12. Identifying Simple Programming Errors",
+sum:[
+"[[Syntax error]]: breaks the language rules, so the program won't run. Examples: missing [[;]], missing [[$]] on a variable, unclosed quote or bracket [[{ }]], misspelled keyword ([[ech]] instead of [[echo]]).",
+"[[Runtime error]]: happens while running. Examples: dividing by zero (throws DivisionByZeroError in PHP 8), using an undefined variable (warning), calling an undefined function.",
+"[[Logical error]]: runs but gives the WRONG answer. Examples: using [[=]] instead of [[==]]; wrong operator; off-by-one ([[<]] instead of [[<=]]); wrong formula like [[$a + $b + $c / 3]] instead of [[($a + $b + $c) / 3]]; infinite loop.",
+"[[Debugging]] tips: read the error message and line number, use [[echo]] or [[var_dump()]] to check values, test with simple numbers."],
+code:`<?php
+// Syntax error: missing semicolon
+echo "Hello"      // <- needs ;
+
+// Logic error: assignment instead of comparison
+$x = 3;
+if ($x = 5) { echo "Yes"; }   // always true! use ==
+
+// Logic error: wrong average
+$avg = $a + $b + $c / 3;      // should be ($a + $b + $c) / 3
+
+// Runtime error
+echo 10 / 0;                  // DivisionByZeroError
+?>`,
+eli5:"Syntax error = you wrote a sentence the computer can't read (like forgetting a period). Runtime error = the sentence is fine but asks for the impossible (like 'divide cookies among zero friends'). Logic error = the computer did what you said, but you said the wrong thing."},
+
+{t:"13. Writing Basic PHP Programs (variables, input, arithmetic, conditions, loops)",
+sum:[
+"Recipe for any program: (1) read the problem, (2) list inputs and outputs, (3) choose variables, (4) write the process, (5) test with sample values.",
+"Common programs: sum/average, area of shapes, even/odd, positive/negative/zero, grade classifier, factorial, multiplication table, sum of 1 to N, counting.",
+"Even/odd: [[$n % 2 == 0]]. Average: [[($a+$b+$c)/3]]. Factorial: multiply 1 x 2 x ... x n in a loop.",
+"Remember to convert input with [[intval()]] or [[floatval()]] before math.",
+"Use [[round($x, 2)]] to round decimals, [[number_format($x, 2)]] to format money."],
+code:`<?php
+// 1) Even or odd
+$n = intval($_POST['n'] ?? 0);
+echo ($n % 2 == 0) ? "Even" : "Odd";
+
+// 2) Sum of 1 to 10
+$sum = 0;
+for ($i = 1; $i <= 10; $i++) { $sum += $i; }
+echo $sum;   // 55
+
+// 3) Factorial of 5
+$f = 1;
+for ($i = 1; $i <= 5; $i++) { $f *= $i; }
+echo $f;     // 120
+
+// 4) Multiplication table of 3
+for ($i = 1; $i <= 10; $i++) { echo "3 x $i = " . (3*$i) . "<br>"; }
+
+// 5) Grade program
+$score = floatval($_POST['score'] ?? 0);
+if ($score >= 90) echo "A";
+elseif ($score >= 80) echo "B";
+elseif ($score >= 75) echo "C";
+else echo "Failed";
+?>`,
+eli5:"Writing a program is: ask a question (input), think about it with some math or a decision (process), and say the answer (output). Start small, try it with easy numbers, and fix it if the answer looks silly."}
+];
+
+/* ===================== QUESTIONS (first answer = correct) ===================== */
+const Q=[
+["What is the FIRST step in problem solving?","Understand the problem","Write the code","Run the program","Debug the code"],
+["IPO in programming stands for:","Input, Process, Output","Insert, Print, Open","Index, Parse, Order","Input, Print, Output"],
+["A step-by-step set of instructions to solve a problem is called a(n):","Algorithm","Variable","Syntax","Operator"],
+["Which is the correct PHP opening tag?","<?php","<php>","<?script","<%php"],
+["Which is a VALID PHP variable name?","$_total","$1st","$my name","total"],
+["Are $age and $Age the same variable in PHP?","No, variable names are case-sensitive","Yes, PHP ignores case","Only inside functions","Only in strings"],
+["What is the data type of 3.14?","float","int","string","bool"],
+["What does gettype(10) return?","integer","number","int10","digit"],
+["Which formula correctly gets the average of $a, $b, $c?","($a + $b + $c) / 3","$a + $b + $c / 3","$a + ($b + $c / 3)","$a / 3 + $b + $c"],
+["With $name = 'John', echo \"Hi $name\"; prints:","Hi John","Hi $name","Hi name","Error"],
+["With $name = 'John', echo 'Hi $name'; prints:","Hi $name","Hi John","Hi","Error"],
+["Which operator joins (concatenates) strings in PHP?",". (dot)","+","&",","],
+["Which superglobal holds data from a form using method=\"post\"?","$_POST","$_GET","$_FORM","$_INPUT"],
+["intval('42abc') returns:","42","0","42abc","Error"],
+["intval(9.99) returns:","9","10","9.99","0"],
+["floatval('3.5kg') returns:","3.5","35","0","3"],
+["intval('abc') returns:","0","abc","null","Error"],
+["What is 10 % 3 ?","1","3","0","3.33"],
+["What is 2 ** 3 ?","8","6","5","23"],
+["What does 10 / 4 give in PHP?","2.5","2","3","2.0 only as string"],
+["How does === differ from == ?","=== compares value AND type","=== assigns a value","=== compares only the type","There is no difference"],
+["What is the result of '5' === 5 ?","false","true","null","Error"],
+["What is the result of: ! (5 > 3) ?","false","true","5","null"],
+["What is the result of: 2 + 3 * 4 ?","14","20","24","9"],
+["Which has the HIGHEST precedence?","Parentheses ( )","+","&&","="],
+["What is the result of: 10 - 4 - 2 ?","4","8","0","12"],
+["Which statement is best for choosing among many fixed values of one variable?","switch","for","while","echo"],
+["What happens if you forget break in a switch case?","It falls through to the next case","The program crashes","Nothing, it stops","It loops forever"],
+["$score = 85;\nif ($score >= 90) echo 'A';\nelseif ($score >= 80) echo 'B';\nelse echo 'C';\n\nOutput?","B","A","C","BC"],
+["Which condition checks that $g is from 75 to 100?","$g >= 75 && $g <= 100","$g >= 75 || $g <= 100","$g = 75 && $g = 100","$g > 75 or < 100"],
+["Which loop always runs at least once?","do-while","while","for","foreach only"],
+["for ($i=1; $i<=3; $i++) echo $i;\n\nOutput?","123","12","321","3"],
+["$i = 5;\nwhile ($i < 5) { echo $i; }\n\nOutput?","Nothing is printed","5","55555","Error"],
+["What does break do inside a loop?","Exits the loop immediately","Skips one round","Restarts the loop","Pauses the loop"],
+["for ($i=1; $i<=5; $i++) {\n  if ($i == 3) continue;\n  echo $i;\n}\n\nOutput?","1245","12","12345","345"],
+["$x = 2;\n$x += 3;\n$x *= 2;\necho $x;\n\nOutput?","10","7","12","20"],
+["$n = 0;\nfor ($i=1; $i<=4; $i++) { $n += $i; }\necho $n;\n\nOutput?","10","4","24","6"],
+["What is the error in: if ($x = 5) { ... } ?","Uses = (assign) instead of == (compare)","Missing semicolon","Wrong variable name","Missing echo"],
+["echo \"Hello\"   (no semicolon at the end) is what kind of error?","Syntax error","Logical error","Runtime error","No error"]
+];
+
+/* ===================== HELPERS ===================== */
+const $=id=>document.getElementById(id);
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const fmt=s=>esc(s).replace(/\[\[(.+?)\]\]/g,'<code>$1</code>');
+const shuf=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const DUR=1800, COOL=30*60*1000;
+const ls={get:(k,d)=>{try{const v=localStorage.getItem(k);return v===null?d:v}catch(e){return d}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}},del:k=>{try{localStorage.removeItem(k)}catch(e){}}};
+
+/* syntax highlighter */
+const CLS=['cm','st','tg','va','kw','nu','fn'];
+const HRE=/(\/\/.*|#.*|\/\*[\s\S]*?\*\/)|("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')|(<\?php|\?>)|(\$\w+)|\b(echo|print|if|else|elseif|switch|case|break|continue|default|for|while|do|foreach|true|false|null|define|const|isset)\b|(\b\d+(?:\.\d+)?\b)|(\b[a-zA-Z_]\w*)(?=\()/g;
+function hl(src){
+  let out='',last=0,m;HRE.lastIndex=0;
+  while((m=HRE.exec(src))){
+    out+=esc(src.slice(last,m.index));
+    let c=0;for(let i=0;i<7;i++){if(m[i+1]!==undefined){c=i;break}}
+    out+='<span class="'+CLS[c]+'">'+esc(m[0])+'</span>';last=HRE.lastIndex;
+  }
+  return out+esc(src.slice(last));
+}
+
+/* ===================== THEME ===================== */
+function setTheme(t){document.documentElement.dataset.theme=t;ls.set('phpTheme',t);document.querySelectorAll('#dots b').forEach(b=>b.classList.toggle('on',b.dataset.t===t));if(window.recolor)recolor()}
+document.querySelectorAll('#dots b').forEach(b=>b.onclick=()=>setTheme(b.dataset.t));
+
+/* ===================== BUILD REVIEWER ===================== */
+let done=[];try{done=JSON.parse(ls.get('phpDone','[]'))||[]}catch(e){done=[]}
+function updStats(){
+  $('sTop').textContent=done.length+'/'+T.length;
+  const b=ls.get('phpBest',null);$('sBest').textContent=b===null?'--':b+'/40';
+  document.querySelectorAll('#side a').forEach((a,i)=>a.classList.toggle('done',done.includes(i)));
+  document.querySelectorAll('.mark').forEach((m,i)=>{const d=done.includes(i);m.classList.toggle('done',d);m.textContent=d?'✓ Studied':'Mark as studied'});
+}
+T.forEach((x,i)=>{
+  const [n,...rest]=x.t.split('. ');const title=rest.join('. ');
+  const a=document.createElement('a');a.href='#t'+i;a.id='s'+i;
+  a.innerHTML='<em><span>'+n+'</span></em><span class="t">'+esc(title.split(/[:(]/)[0].trim())+'</span>';
+  $('side').appendChild(a);
+  const d=document.createElement('div');d.className='card rv';d.id='t'+i;
+  d.innerHTML='<div class="th"><div class="num">'+n+'</div><h3>'+esc(title)+'</h3></div>'
+   +'<ul class="pts">'+x.sum.map(s=>'<li>'+fmt(s)+'</li>').join('')+'</ul>'
+   +'<div class="cw"><div class="bar3"><i></i><i></i><i></i><span>example'+n+'.php</span><button onclick="copyCode(this,'+i+')">Copy</button></div><pre>'+hl(x.code)+'</pre></div>'
+   +'<div class="eli"><button class="btn sm" onclick="this.parentNode.querySelector(\'.e5\').classList.toggle(\'on\')">🧒 Explain like I\'m 5</button>'
+   +'<button class="btn sm ghost mark" onclick="toggleDone('+i+')">Mark as studied</button>'
+   +'<div class="e5">🧒 '+esc(x.eli5)+'</div></div>';
+  $('topics').appendChild(d);
+});
+function copyCode(b,i){
+  const done=()=>{b.textContent='Copied ✓';setTimeout(()=>b.textContent='Copy',1400)};
+  try{navigator.clipboard.writeText(T[i].code).then(done,done)}catch(e){done()}
+}
+function toggleDone(i){const k=done.indexOf(i);if(k>=0)done.splice(k,1);else done.push(i);ls.set('phpDone',JSON.stringify(done));updStats()}
+let allOn=false;
+function toggleAll(){allOn=!allOn;document.querySelectorAll('.e5').forEach(e=>e.classList.toggle('on',allOn));if(!examActive)show('rev')}
+
+/* reveal + scroll spy + spotlight */
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('in')}),{threshold:.08});
+document.querySelectorAll('.rv').forEach(c=>io.observe(c));
+const spy=new IntersectionObserver(es=>es.forEach(e=>{
+  if(e.isIntersecting){document.querySelectorAll('#side a').forEach(a=>a.classList.remove('on'));const a=$('s'+e.target.id.slice(1));if(a){a.classList.add('on');if(innerWidth<=980)a.scrollIntoView({inline:'center',block:'nearest'})}}
+}),{rootMargin:'-30% 0px -60% 0px'});
+document.querySelectorAll('#topics .card').forEach(c=>spy.observe(c));
+/* hero typewriter */
+const TYPE=`<?php
+$topic = "PHP";
+$ready = true;
+
+for ($i = 1; $i <= 13; $i++) {
+    echo "Topic $i: learned!";
+}
+
+if ($ready && $score >= 75) {
+    echo "You got this 🚀";
+}
+?>`;
+(function(){let i=0;const el=$('typer');
+  function step(){
+    if(i<=TYPE.length){el.innerHTML=hl(TYPE.slice(0,i))+'<span class="cur"></span>';i++;setTimeout(step,i%12===0?140:28)}
+    else setTimeout(()=>{i=0;step()},3800);
+  }step();
+})();
+
+/* ===================== BACKGROUND SYMBOLS ===================== */
+(function(){
+  const cv=$('fx'),ctx=cv.getContext('2d');let W,H,P=[];
+  const SYM=['$','<?','?>',';','{','}','()','=>','==','++','%','&&','[]','echo','if','for'];
+  function size(){W=cv.width=innerWidth;H=cv.height=innerHeight}
+  size();addEventListener('resize',size);
+  for(let i=0;i<46;i++)P.push({x:Math.random()*1e4%1600,y:Math.random()*1e4%1000,s:SYM[i%SYM.length],v:.12+Math.random()*.4,z:10+Math.random()*20,o:.04+Math.random()*.1,r:Math.random()*6.28,w:(Math.random()-.5)*.003});
+  let col='#22d3ee';
+  window.recolor=()=>{col=getComputedStyle(document.documentElement).getPropertyValue('--ac').trim()||'#22d3ee'};recolor();
+  (function loop(){
+    ctx.clearRect(0,0,W,H);ctx.fillStyle=col;
+    P.forEach(p=>{p.y-=p.v;p.r+=p.w;if(p.y<-40){p.y=H+40;p.x=Math.random()*W}
+      ctx.save();ctx.globalAlpha=p.o;ctx.font='700 '+p.z+'px Consolas,monospace';ctx.translate(p.x%W,p.y);ctx.rotate(Math.sin(p.r)*.3);ctx.fillText(p.s,0,0);ctx.restore()});
+    requestAnimationFrame(loop);
+  })();
+})();
+
+/* ===================== VIEWS ===================== */
+function show(v){
+  if(examActive)return;
+  ['rev','exh','exam'].forEach(k=>$(k).classList.toggle('hide',k!==v));
+  $('tabRev').classList.toggle('on',v==='rev');$('tabEx').classList.toggle('on',v==='exh');
+  if(v==='exh')updateCool();
+  window.scrollTo(0,0);
+}
+
+/* ===================== COOLDOWN ===================== */
+let coolT=null,leftNote=false;
+function leftMs(){const l=+ls.get('phpExamLast',0)||0;return Math.max(0,l+COOL-Date.now())}
+function updateCool(){
+  clearInterval(coolT);
+  const run=()=>{
+    const m=leftMs();const b=$('cool'),s=$('startBtn');
+    if(m>0){const mm=Math.floor(m/60000),ss=Math.floor(m/1000)%60;
+      b.classList.remove('hide');
+      b.textContent=(leftNote?'🚪 You left the exam, so it was ended. ':'')+'⏳ You can retake the exam in '+mm+':'+String(ss).padStart(2,'0');
+      s.disabled=true;}
+    else{b.classList.add('hide');s.disabled=false;clearInterval(coolT);}
+  };run();coolT=setInterval(run,1000);
+}
+
+/* ===================== EXAM ===================== */
+let examActive=false,qs=[],ans={},flags={},cur=0,endAt=0,tick=null;
+
+function startExam(){
+  if(leftMs()>0)return;
+  leftNote=false;
+  qs=shuf(Q.map((q,i)=>({i,q:q[0],c:q[1],o:shuf(q.slice(1))})));
+  ans={};flags={};cur=0;endAt=Date.now()+DUR*1000;examActive=true;
+  $('topbar').classList.add('hide');$('foot').classList.add('hide');
+  ['rev','exh'].forEach(k=>$(k).classList.add('hide'));$('exam').classList.remove('hide');
+  $('resultBox').innerHTML='';
+  ls.set('phpExamState','1');ls.set('phpExamAns',JSON.stringify({}));
+  renderQ();window.scrollTo(0,0);
+  tick=setInterval(()=>{
+    const s=Math.max(0,Math.round((endAt-Date.now())/1000));
+    $('timer').textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+    $('ring').classList.toggle('low',s<=300);
+    $('pr').style.strokeDashoffset=326.7*(1-s/DUR);
+    if(s<=0)finish('time');
+  },500);
+}
+function renderQ(){
+  const q=qs[cur],n=Object.keys(ans).length;
+  $('qcount').textContent='Question '+(cur+1)+' of '+qs.length+' · '+n+' answered';
+  $('abar').style.width=(n/qs.length*100)+'%';
+  const code=q.q.includes('\n');
+  let head=q.q,body;
+  if(code){const parts=q.q.split('\n\n');const last=parts.pop();body='<div class="cw qcode"><div class="bar3"><i></i><i></i><i></i><span>question.php</span></div><pre>'+hl(parts.join('\n\n'))+'</pre></div><p class="qtext">'+esc(last)+'</p>'}
+  else body='<p class="qtext">'+esc(q.q)+'</p>';
+  $('qbox').style.animation='none';void $('qbox').offsetWidth;$('qbox').style.animation='';
+  $('qbox').innerHTML='<div class="qhead"><span class="qtag">Item '+(cur+1)+'</span><button class="btn sm ghost flag '+(flags[q.i]?'on':'')+'" onclick="flag()">⚑ '+(flags[q.i]?'Flagged':'Flag')+'</button></div>'+body
+   +'<div class="opts">'+q.o.map((o,k)=>'<button class="opt '+(ans[q.i]===o?'sel':'')+'" onclick="pick('+k+')">'+esc(o)+'</button>').join('')+'</div>';
+  $('qnav').innerHTML=qs.map((x,k)=>'<button class="'+(ans[x.i]!==undefined?'done ':'')+(flags[x.i]?'fl ':'')+(k===cur?'cur':'')+'" onclick="cur='+k+';renderQ()">'+(k+1)+'</button>').join('');
+}
+function pick(k){const q=qs[cur];ans[q.i]=q.o[k];ls.set('phpExamAns',JSON.stringify(ans));renderQ()}
+function flag(){const q=qs[cur];flags[q.i]=!flags[q.i];renderQ()}
+function go(d){cur=Math.min(qs.length-1,Math.max(0,cur+d));renderQ()}
+document.addEventListener('keydown',e=>{
+  if(!examActive||document.querySelector('.modal'))return;
+  const k=e.key.toLowerCase();
+  if(['1','2','3','4'].includes(k))pick(+k-1);
+  else if(['a','b','c','d'].includes(k))pick('abcd'.indexOf(k));
+  else if(k==='arrowright')go(1);else if(k==='arrowleft')go(-1);else if(k==='f')flag();
+});
+
+function submitExam(){
+  const un=qs.length-Object.keys(ans).length,fl=Object.values(flags).filter(Boolean).length;
+  const m=document.createElement('div');m.className='modal';
+  m.innerHTML='<div class="mbox"><h3>Submit your exam?</h3><p>'+(un?'⚠️ You still have <b>'+un+'</b> unanswered item'+(un>1?'s':'')+'. ':'All items answered. ')+(fl?fl+' flagged. ':'')+'You cannot undo this.</p><div class="row"><button class="btn ghost" id="mNo">Keep going</button><button class="btn" id="mYes">Submit now</button></div></div>';
+  document.body.appendChild(m);
+  $('mNo').onclick=()=>m.remove();
+  $('mYes').onclick=()=>{m.remove();finish('submit')};
+}
+
+function score(a){let s=0;Q.forEach((q,i)=>{if(a[i]===q[1])s++});return s}
+
+function finish(reason,savedAns){
+  if(!examActive&&!savedAns)return;
+  const a=savedAns||ans;
+  examActive=false;clearInterval(tick);
+  document.querySelectorAll('.modal').forEach(x=>x.remove());
+  ls.set('phpExamLast',Date.now());
+  ls.del('phpExamState');ls.del('phpExamAns');
+  $('exam').classList.add('hide');$('topbar').classList.remove('hide');$('foot').classList.remove('hide');
+  $('exh').classList.remove('hide');$('rev').classList.add('hide');
+  $('tabRev').classList.remove('on');$('tabEx').classList.add('on');
+
+  /* Left the exam (tab switch / reload): no result, no answers */
+  if(reason==='tab'||reason==='reload'){
+    leftNote=true;$('resultBox').innerHTML='';
+    updateCool();window.scrollTo(0,0);return;
+  }
+
+  const s=score(a),n=Object.keys(a).length,pct=Math.round(s/40*100);
+  const best=+ls.get('phpBest',-1);if(s>best){ls.set('phpBest',s)}updStats();
+  const msg={time:'⏰ Time is up!',submit:'✅ Exam submitted'}[reason];
+  const title=pct>=90?'Outstanding! 🏆':pct>=75?'Great job! 🎉':pct>=50?'Getting there 💪':'Keep reviewing 📚';
+  $('resultBox').innerHTML='<div class="card" style="margin-top:24px">'
+   +'<div class="warnbox" style="margin-top:0">'+msg+'</div>'
+   +'<div class="res"><div class="sring"><svg viewBox="0 0 170 170"><defs><linearGradient id="gr2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset=".5" stop-color="#a78bfa"/><stop offset="1" stop-color="#f472b6"/></linearGradient></defs><circle class="tr" cx="85" cy="85" r="75"/><circle class="pr" id="spr" cx="85" cy="85" r="75"/></svg><div class="mid"><div><b class="grad">'+s+'/40</b><span>'+pct+'%</span></div></div></div>'
+   +'<div class="rtxt"><h3>'+title+'</h3><p class="note">Answered '+n+' of 40 · Unanswered items count as wrong.<br>You can retake the exam after 30 minutes. Head back to the Reviewer anytime.</p>'
+   +'<button class="btn sm" onclick="show(\'rev\')">Back to Reviewer</button></div></div>'
+   +'<h3 style="margin:22px 0 0">Answer Key</h3><div class="chips" id="chips"><span class="chip on" data-f="all">All 40</span><span class="chip" data-f="x">Wrong ('+(40-s)+')</span><span class="chip" data-f="ok">Correct ('+s+')</span></div><div id="akList"></div></div>';
+  const draw=f=>{
+    $('akList').innerHTML=Q.map((q,i)=>({q,i,ok:a[i]===q[1]})).filter(o=>f==='all'||(f==='x'?!o.ok:o.ok)).map(({q,i,ok})=>
+      '<div class="ak '+(ok?'':'x')+'"><pre>'+(i+1)+'. '+esc(q[0])+'</pre><div class="y">Your answer: '+(a[i]!==undefined?esc(a[i]):'(none)')+' '+(ok?'✅':'❌')+'</div><div class="c">Correct: '+esc(q[1])+'</div></div>').join('')||'<p class="note">Nothing here.</p>';
+  };draw('all');
+  document.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{document.querySelectorAll('.chip').forEach(x=>x.classList.remove('on'));c.classList.add('on');draw(c.dataset.f)});
+  updateCool();window.scrollTo(0,0);
+  setTimeout(()=>{const r=$('spr');if(r)r.style.strokeDashoffset=471.2*(1-s/40)},120);
+  if(pct>=75)boom();
+}
+
+/* confetti */
+function boom(){
+  const cv=$('confetti'),c=cv.getContext('2d');cv.classList.remove('hide');cv.width=innerWidth;cv.height=innerHeight;
+  const cols=['#22d3ee','#a78bfa','#f472b6','#34d399','#fbbf24'];
+  const ps=Array.from({length:150},()=>({x:innerWidth/2,y:innerHeight/3,vx:(Math.random()-.5)*16,vy:-Math.random()*15-3,s:5+Math.random()*7,c:cols[Math.random()*5|0],r:Math.random()*6,vr:(Math.random()-.5)*.4}));
+  let f=0;(function loop(){
+    c.clearRect(0,0,cv.width,cv.height);
+    ps.forEach(p=>{p.vy+=.28;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;c.save();c.translate(p.x,p.y);c.rotate(p.r);c.fillStyle=p.c;c.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);c.restore()});
+    if(++f<190)requestAnimationFrame(loop);else{c.clearRect(0,0,cv.width,cv.height);cv.classList.add('hide')}
+  })();
+}
+
+/* Scroll progress bar */
+addEventListener('scroll',()=>{const h=document.documentElement;$('prog').style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%'},{passive:true});
+
+/* Tab switch / leaving detection */
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&examActive)finish('tab')});
+window.addEventListener('blur',()=>{if(examActive)finish('tab')});
+window.addEventListener('pagehide',()=>{if(examActive){ls.set('phpExamLast',Date.now())}});
+
+/* If page was reloaded/closed during an exam: end it quietly */
+if(ls.get('phpExamState',null)){
+  let sa={};try{sa=JSON.parse(ls.get('phpExamAns','{}'))}catch(e){}
+  examActive=true;finish('reload',sa);
+}
+
+setTheme(ls.get('phpTheme','cyan'));
+updStats();
+</script>
+</body>
+</html>
