@@ -79,7 +79,7 @@ header{position:sticky;top:0;z-index:60;display:flex;align-items:center;gap:10px
 .bar3 i:nth-child(1){background:#ff5f57}.bar3 i:nth-child(2){background:#febc2e}.bar3 i:nth-child(3){background:#28c840}
 .bar3 span{margin-left:auto;font-size:12px;color:var(--mut);font-family:Consolas,monospace}
 .term pre{margin:0;padding:20px;min-height:230px;font-family:Consolas,'Fira Code',monospace;font-size:14px;line-height:1.7;white-space:pre-wrap;color:#cbd5ff}
-.cur{display:inline-block;width:9px;height:17px;background:var(--ac);vertical-align:-3px;margin-left:2px;animation:blink 1s step-end infinite}
+.type-cursor{display:inline-block;width:9px;height:17px;background:var(--ac);vertical-align:-3px;margin-left:2px;animation:blink 1s step-end infinite}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:6px 0 10px}
 .stat{background:var(--glass);border:1px solid var(--line);border-radius:18px;padding:16px 18px;backdrop-filter:blur(10px);transition:.3s}
 .stat:hover{transform:translateY(-4px);border-color:color-mix(in srgb,var(--ac) 50%,transparent)}
@@ -174,6 +174,10 @@ code{overflow-wrap:anywhere;background:color-mix(in srgb,var(--ac) 12%,transpare
 .opt:hover{transform:translateX(7px);border-color:var(--ac);box-shadow:0 0 24px color-mix(in srgb,var(--ac) 25%,transparent)}
 .opt.sel{border-color:var(--ac);background:linear-gradient(135deg,color-mix(in srgb,var(--ac) 22%,transparent),color-mix(in srgb,var(--ac2) 22%,transparent));box-shadow:0 0 30px color-mix(in srgb,var(--ac) 30%,transparent)}
 .opt.sel::before{background:linear-gradient(135deg,var(--ac),var(--ac2));color:#04070f}
+.code-answer{display:block;width:100%;min-height:220px;resize:vertical;padding:16px;border:1px solid var(--line);border-radius:14px;background:rgba(3,5,14,.85);color:var(--txt);font:14px/1.7 Consolas,'Fira Code',monospace;tab-size:4}
+.code-answer:focus{outline:2px solid var(--ac);outline-offset:2px}
+.code-review{overflow:hidden}
+.code-review .user-code,.code-review .solution{overflow-x:auto;margin:8px 0 14px;padding:14px;border:1px solid var(--line);border-radius:12px;background:rgba(3,5,14,.65);font:13px/1.65 Consolas,'Fira Code',monospace;white-space:pre-wrap;overflow-wrap:anywhere}
 .xnav{display:flex;gap:10px;margin-top:20px;align-items:center;flex-wrap:wrap}
 .xnav .sp{flex:1}
 .kb{font-size:12px;color:var(--mut)}
@@ -281,7 +285,7 @@ footer{text-align:center;color:var(--mut);font-size:13px;padding:30px 0 10px}
       <div>
         <span class="pill">Study mode · 13 topics</span>
         <h2>Master <span class="grad">PHP</span><br>one block at a time.</h2>
-        <p>Short summaries, color coded code, kid simple explanations, and a timed 40 item exam to prove you got it.</p>
+        <p>Short summaries, color coded code, kid simple explanations, and a timed 45 item exam to prove you got it.</p>
         <div class="cta">
           <button class="btn big" onclick="document.getElementById('t0').scrollIntoView()">Start reviewing →</button>
           <button class="btn big ghost" onclick="show('exh')">Take the exam</button>
@@ -294,7 +298,7 @@ footer{text-align:center;color:var(--mut);font-size:13px;padding:30px 0 10px}
     </div>
     <div class="stats">
       <div class="stat"><b id="sTop">0/13</b><span>Topics studied</span></div>
-      <div class="stat"><b>40</b><span>Exam items</span></div>
+      <div class="stat"><b>45</b><span>Exam items</span></div>
       <div class="stat"><b>30:00</b><span>Time limit</span></div>
       <div class="stat"><b id="sBest">--</b><span>Best score</span></div>
     </div>
@@ -311,11 +315,12 @@ footer{text-align:center;color:var(--mut);font-size:13px;padding:30px 0 10px}
         <h2>📝 Exam <span class="grad">Arena</span></h2>
         <p class="note">Focus up. Once you start, there is no turning back.</p>
         <div class="rules">
-          <div class="rule"><b>🧮</b><span>40 items covering all 13 topics</span></div>
+          <div class="rule"><b>🧮</b><span>45 items: 40 multiple-choice and 5 coding</span></div>
           <div class="rule"><b>⏱️</b><span>30 minutes only</span></div>
           <div class="rule"><b>🙈</b><span>The reviewer is hidden during the exam</span></div>
           <div class="rule"><b>🚫</b><span>Switch tabs or minimize and the exam ends. No score or answers shown.</span></div>
         </div>
+        <p class="note">Your score is based on the 40 multiple-choice items. Coding responses are for self-review.</p>
         <p class="note">You can retake it only after 30 minutes.</p>
         <div id="cool" class="warnbox hide"></div>
         <button class="btn big" id="startBtn" onclick="startExam()">Start Exam 🚀</button>
@@ -684,7 +689,50 @@ const Q=[
 ["$x = 2;\n$x += 3;\n$x *= 2;\necho $x;\n\nOutput?","10","7","12","20"],
 ["$n = 0;\nfor ($i=1; $i<=4; $i++) { $n += $i; }\necho $n;\n\nOutput?","10","4","24","6"],
 ["What is the error in: if ($x = 5) { ... } ?","Uses = (assign) instead of == (compare)","Missing semicolon","Wrong variable name","Missing echo"],
-["echo \"Hello\"   (no semicolon at the end) is what kind of error?","Syntax error","Logical error","Runtime error","No error"]
+["echo \"Hello\"   (no semicolon at the end) is what kind of error?","Syntax error","Logical error","Runtime error","No error"],
+["Which PHP function returns the number of items in an array?","count()","length()","size()","total()"]
+];
+
+const CODING=[
+{q:"Write a PHP program that stores the name \"Mia\" in a variable and prints: Hello, Mia!",a:`<?php
+$name = "Mia";
+echo "Hello, " . $name . "!";
+?>`},
+{q:"A product costs 12.50 and you have 3 of them. Convert the price string to a number, calculate the total, and print it.",a:`<?php
+$priceText = "12.50";
+$price = floatval($priceText);
+$quantity = 3;
+$total = $price * $quantity;
+echo $total;
+?>`},
+{q:"Set $score to 82. Use if/elseif/else to print A for 90+, B for 80+, C for 75+, and Failed otherwise.",a:`<?php
+$score = 82;
+if ($score >= 90) {
+    echo "A";
+} elseif ($score >= 80) {
+    echo "B";
+} elseif ($score >= 75) {
+    echo "C";
+} else {
+    echo "Failed";
+}
+?>`},
+{q:"Use a for loop to print the multiplication table for 4 from 1 through 5, one line per result.",a:`<?php
+for ($i = 1; $i <= 5; $i++) {
+    echo "4 x $i = " . (4 * $i) . "<br>";
+}
+?>`},
+{q:"Write an isEven($number) function that returns true for even numbers. Call it with 8 and print \"Even\" or \"Odd\".",a:`<?php
+function isEven($number) {
+    return $number % 2 === 0;
+}
+
+if (isEven(8)) {
+    echo "Even";
+} else {
+    echo "Odd";
+}
+?>`}
 ];
 
 /* ===================== HELPERS ===================== */
@@ -764,7 +812,7 @@ if ($ready && $score >= 75) {
 ?>`;
 (function(){let i=0;const el=$('typer');
   function step(){
-    if(i<=TYPE.length){el.innerHTML=hl(TYPE.slice(0,i))+'<span class="cur"></span>';i++;setTimeout(step,i%12===0?140:28)}
+    if(i<=TYPE.length){el.innerHTML=hl(TYPE.slice(0,i))+'<span class="type-cursor"></span>';i++;setTimeout(step,i%12===0?140:28)}
     else setTimeout(()=>{i=0;step()},3800);
   }step();
 })();
@@ -813,10 +861,23 @@ function updateCool(){
 /* ===================== EXAM ===================== */
 let examActive=false,qs=[],ans={},flags={},cur=0,endAt=0,tick=null;
 
+function isAnswered(q,answers=ans){
+  return q.kind==='code'
+    ?typeof answers[q.i]==='string'&&answers[q.i].trim().length>0
+    :answers[q.i]!==undefined;
+}
+function updateProgress(){
+  const n=qs.filter(q=>isAnswered(q)).length;
+  $('qcount').textContent='Question '+(cur+1)+' of '+qs.length+' · '+n+' answered';
+  $('abar').style.width=(n/qs.length*100)+'%';
+  document.querySelectorAll('#qnav button').forEach((b,i)=>b.classList.toggle('done',isAnswered(qs[i])));
+}
+
 function startExam(){
   if(leftMs()>0)return;
   leftNote=false;
-  qs=shuf(Q.map((q,i)=>({i,q:q[0],c:q[1],o:shuf(q.slice(1))})));
+  qs=shuf(Q.map((q,i)=>({i,kind:'choice',q:q[0],c:q[1],o:shuf(q.slice(1))})))
+    .concat(CODING.map((q,i)=>({i:Q.length+i,kind:'code',q:q.q,a:q.a})));
   ans={};flags={};cur=0;endAt=Date.now()+DUR*1000;examActive=true;
   $('topbar').classList.add('hide');$('foot').classList.add('hide');
   ['rev','exh'].forEach(k=>$(k).classList.add('hide'));$('exam').classList.remove('hide');
@@ -832,23 +893,31 @@ function startExam(){
   },500);
 }
 function renderQ(){
-  const q=qs[cur],n=Object.keys(ans).length;
-  $('qcount').textContent='Question '+(cur+1)+' of '+qs.length+' · '+n+' answered';
-  $('abar').style.width=(n/qs.length*100)+'%';
-  const code=q.q.includes('\n');
-  let head=q.q,body;
-  if(code){const parts=q.q.split('\n\n');const last=parts.pop();body='<div class="cw qcode"><div class="bar3"><i></i><i></i><i></i><span>question.php</span></div><pre>'+hl(parts.join('\n\n'))+'</pre></div><p class="qtext">'+esc(last)+'</p>'}
-  else body='<p class="qtext">'+esc(q.q)+'</p>';
+  const q=qs[cur];
+  let body;
+  if(q.kind==='code'){
+    body='<p class="qtext">'+esc(q.q)+'</p><label class="note" for="codeAnswer">Your PHP code</label><textarea id="codeAnswer" class="code-answer" spellcheck="false" autocapitalize="off" autocomplete="off" oninput="saveCode(this)" placeholder="Write your PHP solution here...">'+esc(ans[q.i]||'')+'</textarea><p class="note">Your response is saved as you type. Coding answers are shown for self-review after submission.</p>';
+  }else if(q.q.includes('\n')){
+    const parts=q.q.split('\n\n'),last=parts.pop();
+    body='<div class="cw qcode"><div class="bar3"><i></i><i></i><i></i><span>question.php</span></div><pre>'+hl(parts.join('\n\n'))+'</pre></div><p class="qtext">'+esc(last)+'</p>';
+  }else body='<p class="qtext">'+esc(q.q)+'</p>';
   $('qbox').style.animation='none';void $('qbox').offsetWidth;$('qbox').style.animation='';
-  $('qbox').innerHTML='<div class="qhead"><span class="qtag">Item '+(cur+1)+'</span><button class="btn sm ghost flag '+(flags[q.i]?'on':'')+'" onclick="flag()">⚑ '+(flags[q.i]?'Flagged':'Flag')+'</button></div>'+body
-   +'<div class="opts">'+q.o.map((o,k)=>'<button class="opt '+(ans[q.i]===o?'sel':'')+'" onclick="pick('+k+')">'+esc(o)+'</button>').join('')+'</div>';
-  $('qnav').innerHTML=qs.map((x,k)=>'<button class="'+(ans[x.i]!==undefined?'done ':'')+(flags[x.i]?'fl ':'')+(k===cur?'cur':'')+'" onclick="cur='+k+';renderQ()">'+(k+1)+'</button>').join('');
+  $('qbox').innerHTML='<div class="qhead"><span class="qtag">Item '+(cur+1)+' · '+(q.kind==='code'?'Coding':'Multiple choice')+'</span><button class="btn sm ghost flag '+(flags[q.i]?'on':'')+'" onclick="flag()">⚑ '+(flags[q.i]?'Flagged':'Flag')+'</button></div>'+body
+   +(q.kind==='choice'?'<div class="opts">'+q.o.map((o,k)=>'<button class="opt '+(ans[q.i]===o?'sel':'')+'" onclick="pick('+k+')">'+esc(o)+'</button>').join('')+'</div>':'');
+  $('qnav').innerHTML=qs.map((x,k)=>'<button class="'+(isAnswered(x)?'done ':'')+(flags[x.i]?'fl ':'')+(k===cur?'cur':'')+'" onclick="cur='+k+';renderQ()">'+(k+1)+'</button>').join('');
+  updateProgress();
 }
 function pick(k){const q=qs[cur];ans[q.i]=q.o[k];ls.set('phpExamAns',JSON.stringify(ans));renderQ()}
+function saveCode(el){
+  const q=qs[cur];
+  if(el.value.trim())ans[q.i]=el.value;else delete ans[q.i];
+  ls.set('phpExamAns',JSON.stringify(ans));updateProgress();
+}
 function flag(){const q=qs[cur];flags[q.i]=!flags[q.i];renderQ()}
 function go(d){cur=Math.min(qs.length-1,Math.max(0,cur+d));renderQ()}
 document.addEventListener('keydown',e=>{
   if(!examActive||document.querySelector('.modal'))return;
+  if(e.target.closest&&e.target.closest('input,textarea,select,[contenteditable="true"]'))return;
   const k=e.key.toLowerCase();
   if(['1','2','3','4'].includes(k))pick(+k-1);
   else if(['a','b','c','d'].includes(k))pick('abcd'.indexOf(k));
@@ -856,7 +925,7 @@ document.addEventListener('keydown',e=>{
 });
 
 function submitExam(){
-  const un=qs.length-Object.keys(ans).length,fl=Object.values(flags).filter(Boolean).length;
+  const un=qs.filter(q=>!isAnswered(q)).length,fl=Object.values(flags).filter(Boolean).length;
   const m=document.createElement('div');m.className='modal';
   m.innerHTML='<div class="mbox"><h3>Submit your exam?</h3><p>'+(un?'⚠️ You still have <b>'+un+'</b> unanswered item'+(un>1?'s':'')+'. ':'All items answered. ')+(fl?fl+' flagged. ':'')+'You cannot undo this.</p><div class="row"><button class="btn ghost" id="mNo">Keep going</button><button class="btn" id="mYes">Submit now</button></div></div>';
   document.body.appendChild(m);
@@ -883,19 +952,25 @@ function finish(reason,savedAns){
     updateCool();window.scrollTo(0,0);return;
   }
 
-  const s=score(a),n=Object.keys(a).length,pct=Math.round(s/40*100);
+  const s=score(a),n=qs.filter(q=>isAnswered(q,a)).length,pct=Math.round(s/40*100);
   const best=+ls.get('phpBest',-1);if(s>best){ls.set('phpBest',s)}updStats();
   const msg={time:'⏰ Time is up!',submit:'✅ Exam submitted'}[reason];
   const title=pct>=90?'Outstanding! 🏆':pct>=75?'Great job! 🎉':pct>=50?'Getting there 💪':'Keep reviewing 📚';
   $('resultBox').innerHTML='<div class="card" style="margin-top:24px">'
    +'<div class="warnbox" style="margin-top:0">'+msg+'</div>'
    +'<div class="res"><div class="sring"><svg viewBox="0 0 170 170"><defs><linearGradient id="gr2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset=".5" stop-color="#a78bfa"/><stop offset="1" stop-color="#f472b6"/></linearGradient></defs><circle class="tr" cx="85" cy="85" r="75"/><circle class="pr" id="spr" cx="85" cy="85" r="75"/></svg><div class="mid"><div><b class="grad">'+s+'/40</b><span>'+pct+'%</span></div></div></div>'
-   +'<div class="rtxt"><h3>'+title+'</h3><p class="note">Answered '+n+' of 40 · Unanswered items count as wrong.<br>You can retake the exam after 30 minutes. Head back to the Reviewer anytime.</p>'
+   +'<div class="rtxt"><h3>'+title+'</h3><p class="note">Answered '+n+' of 45 items. The score is based on the 40 multiple-choice items; unanswered multiple-choice items count as wrong. Coding responses are for self-review.<br>You can retake the exam after 30 minutes. Head back to the Reviewer anytime.</p>'
    +'<button class="btn sm" onclick="show(\'rev\')">Back to Reviewer</button></div></div>'
-   +'<h3 style="margin:22px 0 0">Answer Key</h3><div class="chips" id="chips"><span class="chip on" data-f="all">All 40</span><span class="chip" data-f="x">Wrong ('+(40-s)+')</span><span class="chip" data-f="ok">Correct ('+s+')</span></div><div id="akList"></div></div>';
+   +'<h3 style="margin:22px 0 0">Answer Key &amp; Coding Self-Review</h3><div class="chips" id="chips"><span class="chip on" data-f="all">All 45</span><span class="chip" data-f="x">Wrong MC ('+(40-s)+')</span><span class="chip" data-f="ok">Correct MC ('+s+')</span></div><div id="akList"></div></div>';
+  const codingReview=CODING.map((q,index)=>{
+    const item=Q.length+index,response=a[item];
+    return '<div class="ak code-review"><pre>'+(item+1)+'. '+esc(q.q)+'</pre><div class="y">Your code:</div><pre class="user-code">'+(typeof response==='string'&&response.trim()?esc(response):'(not answered)')+'</pre><div class="c">Example solution:</div><pre class="solution">'+hl(q.a)+'</pre></div>';
+  }).join('');
   const draw=f=>{
-    $('akList').innerHTML=Q.map((q,i)=>({q,i,ok:a[i]===q[1]})).filter(o=>f==='all'||(f==='x'?!o.ok:o.ok)).map(({q,i,ok})=>
-      '<div class="ak '+(ok?'':'x')+'"><pre>'+(i+1)+'. '+esc(q[0])+'</pre><div class="y">Your answer: '+(a[i]!==undefined?esc(a[i]):'(none)')+' '+(ok?'✅':'❌')+'</div><div class="c">Correct: '+esc(q[1])+'</div></div>').join('')||'<p class="note">Nothing here.</p>';
+    const multipleChoice=qs.filter(q=>q.kind==='choice').map((q,index)=>({q,i:q.i,number:index+1,ok:a[q.i]===q.c}))
+      .filter(o=>f==='all'||(f==='x'?!o.ok:o.ok))
+      .map(({q,i,number,ok})=>'<div class="ak '+(ok?'':'x')+'"><pre>'+number+'. '+esc(q.q)+'</pre><div class="y">Your answer: '+(a[i]!==undefined?esc(a[i]):'(none)')+' '+(ok?'✅':'❌')+'</div><div class="c">Correct: '+esc(q.c)+'</div></div>').join('');
+    $('akList').innerHTML=(multipleChoice+(f==='all'?codingReview:''))||'<p class="note">Nothing here.</p>';
   };draw('all');
   document.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{document.querySelectorAll('.chip').forEach(x=>x.classList.remove('on'));c.classList.add('on');draw(c.dataset.f)});
   updateCool();window.scrollTo(0,0);
